@@ -12,6 +12,7 @@ djangorestframework-simplejwt = "*"
 django-allauth = "*"
 dj-rest-auth = "*"
 django-cors-headers = "*"
+drf-yasg = "*"
 
 [dev-packages]
 
