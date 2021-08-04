@@ -1,3 +1,4 @@
+from django.conf import settings
 from rest_framework.test import APITestCase, APIClient
 from accounts.models import User
 
@@ -12,19 +13,16 @@ class UserTestCase(APITestCase):
             'password2': 'test12#$',
         }
         cls.data = data
+        cls.test_user = User.objects.create(
+            email="test2@test.com",
+            username="test2",
+        )
+        cls.test_user.set_password('test12#$')
+        cls.test_user.save()
 
-    def test_registration_회원가입하면_유저와_프로필_생성(self):
+    def test_회원가입하면_유저와_함께_유저의_프로필_생성(self):
         response = self.client.post('/accounts/registration/', data=self.data)
-        self.assertEqual(response.status_code, 201)
-        self.assertIn('access_token', response.data)
-
         email = response.data['user']['email']
         user = User.objects.get(email=email)
         self.assertIsNotNone(user.profile)
 
-        access_token = response.data['access_token']
-
-        new_client = APIClient()
-        new_client.credentials(HTTP_AUTHORIZATION='JWT ' + access_token)
-        response = new_client.get('/accounts/user/')
-        self.assertEqual(response.status_code, 200)

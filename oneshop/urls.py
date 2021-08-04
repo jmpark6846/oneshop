@@ -26,6 +26,7 @@ swagger_apis = [
 ]
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-
+   path('admin/', admin.site.urls),
+   path('accounts/', include('dj_rest_auth.urls')),
+   path('accounts/registration/', include('dj_rest_auth.registration.urls')),
 ] + swagger_apis
