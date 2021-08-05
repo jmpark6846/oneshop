@@ -28,6 +28,8 @@ swagger_apis = [
 
 urlpatterns = [
    path('admin/', admin.site.urls),
+
+   # auth
    path('allauth/', include('allauth.urls')),
    path('accounts/', include('dj_rest_auth.urls')),
    path('accounts/registration/', include('dj_rest_auth.registration.urls')),
@@ -35,4 +37,7 @@ urlpatterns = [
    # social login
    path('accounts/google/login/', GoogleLogin.as_view(), name="google_login"),
    path('accounts/kakao/login/', kakao_login, name='kakao_login'),
+
+   # back app
+   path('back/accounts/', include('back.urls')),
 ] + swagger_apis
