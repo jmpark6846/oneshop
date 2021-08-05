@@ -21,6 +21,7 @@ class GoogleLogin(SocialLoginView):
 
 
 KAKAO_API_KEY = os.getenv('KAKAO_API_KEY')
+
 @api_view(['POST'])
 def kakao_login(request):
     code = request.data.get('code')
@@ -36,6 +37,7 @@ def kakao_login(request):
         'code': code
     }
     res = requests.post('https://kauth.kakao.com/oauth/token', data=data)
+
     if res.status_code != 200:
         return JsonResponse({'error': 'failed to get access token'}, status=400)
 
