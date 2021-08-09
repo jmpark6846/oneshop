@@ -40,4 +40,7 @@ urlpatterns = [
 
    # back app
    path('back/accounts/', include('back.urls')),
+
+   # shop app
+   path('shop/', include('shop.urls')),
 ] + swagger_apis

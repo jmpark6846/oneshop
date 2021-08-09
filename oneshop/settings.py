@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+
     'accounts',
+    'shop',
 ]
 
 MIDDLEWARE = [
