@@ -2,12 +2,10 @@ import copy
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
-
 from rest_framework.generics import RetrieveUpdateDestroyAPIView
-
-
 from shop.models import Product, Review
 from shop.serializers import ProductListSerializer, ProductDetailSerializer, ReviewListCreateSerializer
+from oneshop.permissions import IsOwnerOrReadOnly
 
 
 class ProductViewSet(ModelViewSet):
@@ -40,10 +38,4 @@ class ProductViewSet(ModelViewSet):
 class ReviewView(RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewListCreateSerializer
-
-    def get_object(self):
-        review = super().get_object()
-        if self.request.method != 'GET' and review.author != self.request.user :
-            raise Exception()
-
-        return review
+    permission_classes = [IsOwnerOrReadOnly]

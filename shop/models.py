@@ -12,7 +12,7 @@ class Category(models.Model):
 
 
 class Review(models.Model):
-    author = models.ForeignKey('accounts.User', on_delete=models.DO_NOTHING)
+    user = models.ForeignKey('accounts.User', on_delete=models.DO_NOTHING)
     product = models.ForeignKey(Product, related_name='reviews', on_delete=models.DO_NOTHING, null=True)
     title = models.CharField(max_length=120)
     content = models.TextField()

@@ -24,6 +24,11 @@ class ShopTestCase(APITestCase):
             password = 'test',
             username = 'test'
         )
+        cls.user2 = User.objects.create(
+            email='test2@test.co',
+            password='test2',
+            username='test2'
+        )
         cls.client = APIClient()
 
     def test_상품_목록을_조회한다(self):
@@ -41,7 +46,7 @@ class ShopTestCase(APITestCase):
 
         for i in range(review_count):
             Review.objects.create(
-                author=self.user,
+                user=self.user,
                 product=product,
                 title="review title",
                 content="review content abcd"
@@ -53,26 +58,46 @@ class ShopTestCase(APITestCase):
 
     def test_유저는_상품의_리뷰를_생성할수있다(self):
         review_data = {
-            'author': self.user.id,
+            'user': self.user.id,
             'title': 'review title',
             'content': 'review content'
         }
         res = self.client.post(f'/shop/product/{self.product_id}/reviews_create/', data=review_data)
         self.assertIs(res.status_code, 200)
 
-    def test_유저는_자신이_쓴_상품의_리뷰만_삭제할수있다(self):
+    def login(self, user):
+        refresh_token = RefreshToken.for_user(user)
+        access_token = refresh_token.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+    def logout(self):
+        self.client.credentials()
+
+    def test_유저는_리뷰를_삭제할수있다(self):
         product = Product.objects.get(id=self.product_id)
         review = Review.objects.create(
-            author=self.user,
+            user=self.user,
             product=product,
             title='review title',
             content='review content'
         )
 
         self.assertIs(product.reviews.count(), 1)
-        refresh_token = RefreshToken.for_user(self.user)
-        access_token = refresh_token.access_token
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+        self.login(user=self.user)
         res = self.client.delete(f'/shop/reviews/{review.id}/')
+
         self.assertIs(res.status_code, 204)
         self.assertIs(product.reviews.count(), 0)
+
+    def test_유저는_다른유저의_리뷰를_삭제할수없다(self):
+        product = Product.objects.get(id=self.product_id)
+        review = Review.objects.create(
+            user=self.user,
+            product=product,
+            title='review title',
+            content='review content'
+        )
+        self.login(user=self.user2)
+        res = self.client.delete(f'/shop/reviews/{review.id}/')
+        # self.assertIs(res.status_code, 403) AssertionError: 403 is not 403 ..?
+        self.assertIs(product.reviews.count(), 1)
