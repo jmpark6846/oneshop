@@ -1,38 +1,42 @@
-import copy
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.generics import RetrieveAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
+
+from oneshop.permissions import IsOwnerOrReadOnly
 from shop.models import Product, Review
 from shop.serializers import ProductListSerializer, ProductDetailSerializer, ReviewListCreateSerializer
-from oneshop.permissions import IsOwnerOrReadOnly
 
 
-class ProductViewSet(ModelViewSet):
+class ProductListView(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductListSerializer
 
-    def retrieve(self, request, *args, **kwargs):
-        product = self.get_object()
-        serializer = ProductDetailSerializer(product)
-        return Response(serializer.data)
 
-    @action(detail=True, methods=['get'])
-    def reviews(self, request, pk=None):
-        product = self.get_object()
-        queryset = Review.objects.filter(
-            product=product,
-        )
-        serializer = ReviewListCreateSerializer(queryset, many=True)
-        return Response(serializer.data)
+class ProductDetailView(RetrieveAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductDetailSerializer
 
-    @action(detail=True, methods=['post'])
-    def reviews_create(self, request, pk=None):
-        request_data = copy.deepcopy(request.data)
-        request_data['product'] = pk
-        serializer = ReviewListCreateSerializer(data=request_data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
+
+class ReviewListCreateView(ListCreateAPIView):
+    serializer_class = ReviewListCreateSerializer
+
+    def get_queryset(self):
+        product_id = self.kwargs['pk']
+        try:
+            product = Product.objects.get(id=product_id)
+            reviews = Review.objects.filter(
+                product=product
+            )
+            return reviews
+        except Product.DoesNotExist:
+            return Response(data={"error":"상품이 존재하지 않습니다."}, status=404)
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs['pk']
+        try:
+            product = Product.objects.get(id=product_id)
+            serializer.save(product=product)
+        except Product.DoesNotExist:
+            return Response(data={"error":"상품이 존재하지 않습니다."}, status=404)
 
 
 class ReviewView(RetrieveUpdateDestroyAPIView):

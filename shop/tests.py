@@ -18,7 +18,7 @@ class ShopTestCase(APITestCase):
                 category=category
             )
 
-        cls.product_id = random.randint(1, cls.product_count)
+        cls.random_product_id = random.randint(1, cls.product_count)
         cls.user = User.objects.create(
             email = 'test@test.co',
             password = 'test',
@@ -31,17 +31,32 @@ class ShopTestCase(APITestCase):
         )
         cls.client = APIClient()
 
+    def login(self, user):
+        refresh_token = RefreshToken.for_user(user)
+        access_token = refresh_token.access_token
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
+
+    def logout(self):
+        self.client.credentials()
+
+    def get_random_product_id(self):
+        return random.randint(1, self.product_count)
+
+    def get_random_product(self):
+        random_product = Product.objects.get(id=self.random_product_id)
+        return random_product
+
     def test_상품_목록을_조회한다(self):
-        res = self.client.get('/shop/product/')
+        res = self.client.get('/shop/products/')
         self.assertIs(len(res.data), self.product_count)
 
     def test_상품_상세정보를_조회한다(self):
-        res = self.client.get(f'/shop/product/{self.product_id}/')
+        res = self.client.get(f'/shop/products/{self.random_product_id}/')
         self.assertIs(res.status_code, 200)
-        self.assertIs(res.data['id'], self.product_id)
+        self.assertIs(res.data['id'], self.random_product_id)
 
     def test_유저는_상품의_리뷰를_조회할수있다(self):
-        product = Product.objects.get(id=self.product_id)
+        product = self.get_random_product()
         review_count = random.randint(1, 5)
 
         for i in range(review_count):
@@ -52,29 +67,22 @@ class ShopTestCase(APITestCase):
                 content="review content abcd"
             )
 
-        res = self.client.get(f'/shop/product/{self.product_id}/reviews/')
+        res = self.client.get(f'/shop/products/{self.random_product_id}/reviews/')
         self.assertIs(res.status_code, 200)
         self.assertIs(len(res.data), review_count)
 
     def test_유저는_상품의_리뷰를_생성할수있다(self):
         review_data = {
             'user': self.user.id,
+            'product': self.random_product_id,
             'title': 'review title',
             'content': 'review content'
         }
-        res = self.client.post(f'/shop/product/{self.product_id}/reviews_create/', data=review_data)
-        self.assertIs(res.status_code, 200)
-
-    def login(self, user):
-        refresh_token = RefreshToken.for_user(user)
-        access_token = refresh_token.access_token
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {access_token}')
-
-    def logout(self):
-        self.client.credentials()
+        res = self.client.post(f'/shop/products/{self.random_product_id}/reviews/', data=review_data)
+        self.assertIs(res.status_code, 201)
 
     def test_유저는_리뷰를_삭제할수있다(self):
-        product = Product.objects.get(id=self.product_id)
+        product = Product.objects.get(id=self.random_product_id)
         review = Review.objects.create(
             user=self.user,
             product=product,
@@ -90,7 +98,7 @@ class ShopTestCase(APITestCase):
         self.assertIs(product.reviews.count(), 0)
 
     def test_유저는_다른유저의_리뷰를_삭제할수없다(self):
-        product = Product.objects.get(id=self.product_id)
+        product = Product.objects.get(id=self.random_product_id)
         review = Review.objects.create(
             user=self.user,
             product=product,

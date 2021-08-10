@@ -1,11 +1,10 @@
-from django.urls import path, include
-from rest_framework.routers import SimpleRouter
-from shop.views import ProductViewSet, ReviewView
+from django.urls import path
 
-router = SimpleRouter()
-router.register('product', ProductViewSet)
-
+from shop.views import ProductListView, ProductDetailView, ReviewView, ReviewListCreateView
 
 urlpatterns = [
-    path('reviews/<pk>/', ReviewView.as_view(), name='review')
-] + router.urls
+    path('products/', ProductListView.as_view(), name='product-list'),
+    path('products/<pk>/', ProductDetailView.as_view(), name='product-detail'),
+    path('products/<pk>/reviews/', ReviewListCreateView.as_view(), name='review-list'),
+    path('reviews/<pk>/', ReviewView.as_view(), name='review-detail')
+]
