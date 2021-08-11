@@ -153,7 +153,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000'
+    'http://localhost:5000'
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -181,6 +181,7 @@ REST_FRAMEWORK = {
 }
 
 REST_USE_JWT = True
+# JWT_AUTH_COOKIE = "access-token"
 
 # django-allauth
 ACCOUNT_EMAIL_REQUIRED = True
@@ -196,4 +197,3 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
 }
-JWT_AUTH_COOKIE = "access-token"

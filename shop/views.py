@@ -34,7 +34,8 @@ class ReviewListCreateView(ListCreateAPIView):
         product_id = self.kwargs['pk']
         try:
             product = Product.objects.get(id=product_id)
-            serializer.save(product=product)
+
+            serializer.save(product=product, user=self.request.user)
         except Product.DoesNotExist:
             return Response(data={"error":"상품이 존재하지 않습니다."}, status=404)
 
