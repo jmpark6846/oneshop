@@ -13,6 +13,7 @@ django-allauth = "*"
 dj-rest-auth = {extras = ["with_social"], version = "*"}
 django-cors-headers = "*"
 drf-yasg = "*"
+pillow = "*"
 
 [dev-packages]
 

@@ -10,6 +10,11 @@ class Product(models.Model):
         return self.name
 
 
+class Image(models.Model):
+    file = models.ImageField(null=False)
+    product = models.ForeignKey('Product', related_name='images', on_delete=models.CASCADE)
+
+
 class Category(models.Model):
     name = models.CharField(max_length=50)
 

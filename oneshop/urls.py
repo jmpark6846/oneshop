@@ -39,7 +39,7 @@ urlpatterns = [
    path('accounts/kakao/login/', kakao_login, name='kakao_login'),
 
    # back app
-   path('back/accounts/', include('back.urls')),
+   path('back/', include('back.urls')),
 
    # shop app
    path('shop/', include('shop.urls')),
