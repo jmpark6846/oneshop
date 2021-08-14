@@ -179,6 +179,8 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ),
+    # 'DEFAULT_PAGINATION_CLASS': 'oneshop.paginations.DefaultPagination',
+    # 'PAGE_SIZE': 3,
 }
 
 REST_USE_JWT = True
@@ -199,7 +201,7 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'accounts.serializers.UserDetailSerializer'
 }
