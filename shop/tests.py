@@ -2,7 +2,7 @@ import random
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIClient
-from shop.models import Product, Category, Review
+from shop.models import Product, Category, Review, CartItem
 from accounts.models import User
 
 
@@ -109,3 +109,20 @@ class ShopTestCase(APITestCase):
         res = self.client.delete(f'/shop/reviews/{review.id}/')
         # self.assertIs(res.status_code, 403) AssertionError: 403 is not 403 ..?
         self.assertIs(product.reviews.count(), 1)
+
+    def test_장바구니_추가할수있다(self):
+        self.login(user=self.user)
+        # CartItem.objects.create(
+        #     user=self.user,
+        #     product=product
+        # )
+        cart_item_data = {
+            'user': self.user.id,
+            'product': self.random_product_id
+        }
+        res = self.client.post('/shop/cart/', cart_item_data)
+        self.assertEqual(res.status_code, 200)
+
+
+    def test_장바구니_항목들을_주문하고_결제한다(self):
+        pass

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from shop.models import Product, Review
+from shop.models import Product, Review, CartItem
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -36,3 +36,9 @@ class ReviewListCreateSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'product', 'title', 'content']
         depth = 1
         read_only_fields = ['user','product']
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = '__all__'

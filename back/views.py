@@ -8,7 +8,7 @@ from accounts.models import User
 from oneshop.paginations import DefaultPagination
 from shop.models import Product, Image, Category, Review
 from back.serializers import UserSerializer, ProductListSerializer, ProductDetailSerializer, CategorySerializer, \
-    ReviewSerializer, UserCreateSerializer
+    ReviewSerializer, UserCreateSerializer, ProductImageSerializer
 
 
 class UserViewSet(ModelViewSet):
@@ -54,23 +54,6 @@ class ProductViewSet(ModelViewSet):
         else:
             return ProductDetailSerializer
 
-    def create(self, request, *args, **kwargs):
-        image_files = request.FILES.getlist('image_files')
-        try:
-            serializer = ProductListSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            product = serializer.save()
-            for file in image_files:
-                Image.objects.create(
-                    file=file,
-                    product=product,
-                )
-            data = ProductDetailSerializer(product).data
-            return Response(data, status=200)
-
-        except exceptions.ValidationError as e:
-            return Response(e.detail, status=e.status_code)
-
     @action(detail=True, methods=['get'])
     def reviews(self, request, pk=None):
         product = self.get_object()
@@ -86,6 +69,43 @@ class ProductViewSet(ModelViewSet):
         serializer = ReviewSerializer(reviews, many=True)
         return Response(serializer.data)
 
+    @action(detail=True, methods=['post'])
+    def thumbs(self, request, pk=None):
+        image_files = request.FILES.getlist('image_files')
+        product = self.get_object()
+        image_count = product.images.count()
+        try:
+            for idx, file in enumerate(image_files, start=1):
+                Image.objects.create(
+                    file=file,
+                    product=product,
+                    order=image_count+idx
+                )
+
+            queryset = Image.objects.filter(
+                product=product
+            ).order_by('order')
+            serializer = ProductImageSerializer(queryset, many=True)
+            return Response(serializer.data, status=200)
+
+        except exceptions.ValidationError as e:
+            return Response(e.detail, status=e.status_code)
+
+    @action(detail=True, methods=['put'])
+    def set_order(self, request, pk=None):
+        product = self.get_object()
+        new_order_dict = self.request.data.get('order')
+        queryset = Image.objects.filter(
+            product=product
+        )
+        for thumb in queryset:
+            thumb.order = new_order_dict[str(thumb.id)]
+            thumb.save()
+
+        ordered_thumbs = queryset.order_by('order')
+        serializer = ProductImageSerializer(ordered_thumbs, many=True)
+        return Response(serializer.data, status=200)
+    
 
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.all()

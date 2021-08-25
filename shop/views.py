@@ -1,9 +1,11 @@
 from rest_framework.generics import RetrieveAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
-from oneshop.permissions import IsOwnerOrReadOnly
+from oneshop.permissions import IsOwnerOrReadOnly, IsOwner
 from shop.models import Product, Review
-from shop.serializers import ProductListSerializer, ProductDetailSerializer, ReviewListCreateSerializer
+from shop.serializers import ProductListSerializer, ProductDetailSerializer, ReviewListCreateSerializer, \
+    CartItemSerializer
 
 
 class ProductListView(ListAPIView):
@@ -44,3 +46,32 @@ class ReviewView(RetrieveUpdateDestroyAPIView):
     queryset = Review.objects.all()
     serializer_class = ReviewListCreateSerializer
     permission_classes = [IsOwnerOrReadOnly]
+
+
+class CartItemViewSet(ModelViewSet):
+    permission_classes = [IsOwner]
+
+    def get_queryset(self):
+        return self.request.user.cart_items
+
+    def get_serializer_class(self):
+        return CartItemSerializer
+
+    def create(self, request, *args, **kwargs):
+        """
+        카트 아이템 정보를 받고 아이템 생성
+        만약 이미 제품을 포함한 카트아이템이 있다면 갯수를 추가
+        """
+        product_id = kwargs['product']
+
+        queryset = self.queryset.filter(
+            product_id=product_id
+        )
+
+        if queryset.exist():
+            cart_item = queryset.all()[0]
+            cart_item.quantity += kwargs['quantity']
+            cart_item.save()
+            return Response(CartItemSerializer(cart_item).data)
+
+        return super(CartItemViewSet, self).create(request, *args, **kwargs)
