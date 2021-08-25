@@ -62,15 +62,18 @@ class CartItemViewSet(ModelViewSet):
         카트 아이템 정보를 받고 아이템 생성
         만약 이미 제품을 포함한 카트아이템이 있다면 갯수를 추가
         """
-        product_id = kwargs['product']
+        serializer = CartItemSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=400)
 
-        queryset = self.queryset.filter(
-            product_id=product_id
+        serializer_data = serializer.data
+        queryset = self.get_queryset().filter(
+            product_id=serializer_data['product']
         )
 
-        if queryset.exist():
+        if queryset.exists():
             cart_item = queryset.all()[0]
-            cart_item.quantity += kwargs['quantity']
+            cart_item.quantity += serializer_data['quantity']
             cart_item.save()
             return Response(CartItemSerializer(cart_item).data)
 

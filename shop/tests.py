@@ -112,17 +112,30 @@ class ShopTestCase(APITestCase):
 
     def test_장바구니_추가할수있다(self):
         self.login(user=self.user)
-        # CartItem.objects.create(
-        #     user=self.user,
-        #     product=product
-        # )
         cart_item_data = {
             'user': self.user.id,
             'product': self.random_product_id
         }
         res = self.client.post('/shop/cart/', cart_item_data)
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
 
+    def test_장바구니에_있는_항목을_또_추가할경우_갯수추가(self):
+        self.login(user=self.user)
+        product = Product.objects.get(id=self.random_product_id)
+        cart_item = CartItem.objects.create(
+            user=self.user,
+            product=product
+        )
+        new_cart_item_data = {
+            'user': self.user.id,
+            'product': self.random_product_id,
+            'quantity': 2
+        }
+        res = self.client.post('/shop/cart/', new_cart_item_data)
+        cart_item.refresh_from_db()
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(cart_item.quantity, 3)
+        self.assertEqual(self.user.cart_items.count(), 1)
 
     def test_장바구니_항목들을_주문하고_결제한다(self):
         pass

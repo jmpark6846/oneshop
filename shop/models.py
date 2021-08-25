@@ -49,13 +49,13 @@ class CartItem(models.Model):
 
 
 class Order(BaseModel):
-    class ORDER_STATUS(Enum):
+    class OrderStatus(models.IntegerChoices):
         # 주문 상태는 간단히 두 가지만
         NOT_PAID = 0
         PAID = 1
 
     user = models.ForeignKey('accounts.User', on_delete=models.DO_NOTHING)
-    status = models.SmallIntegerField(choices=ORDER_STATUS, default=ORDER_STATUS.NOT_PAID)
+    status = models.SmallIntegerField(choices=OrderStatus.choices, default=OrderStatus.NOT_PAID)
 
     @property
     def total_quantity(self):
