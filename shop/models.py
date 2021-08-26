@@ -74,3 +74,9 @@ class OrderItem(BaseModel):
     @property
     def price(self):
         return self.product.price * self.quantity
+
+
+class Cart(models.Model):
+    user = models.ForeignKey('accounts.User', related_name='cart', on_delete=models.CASCADE)
+    items = models.TextField()
+

@@ -38,7 +38,8 @@ class ReviewListCreateSerializer(serializers.ModelSerializer):
         read_only_fields = ['user','product']
 
 
-class CartItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CartItem
-        fields = '__all__'
+class CartItemSerializer(serializers.Serializer):
+    product = serializers.IntegerField()
+    quantity = serializers.IntegerField()
+
+
