@@ -1,13 +1,16 @@
+import datetime
 import json
+from datetime import timedelta
+
 from rest_framework.decorators import api_view
 from rest_framework.generics import RetrieveAPIView, ListAPIView, RetrieveUpdateDestroyAPIView, ListCreateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from oneshop.permissions import IsOwnerOrReadOnly, IsOwner
-from shop.models import Product, Review
+from shop.models import Product, Review, Cart
 from shop.serializers import ProductListSerializer, ProductDetailSerializer, ReviewListCreateSerializer, \
-    CartItemSerializer
+    CartItemSerializer, CartSerializer
 
 
 class ProductListView(ListAPIView):
@@ -51,7 +54,7 @@ class ReviewView(RetrieveUpdateDestroyAPIView):
 
 
 @api_view(['POST'])
-def add_to_cart(self, request: Request):
+def add_to_cart(request: Request):
     """
     카트 항목 추가
     post data validation, serialization
@@ -64,25 +67,37 @@ def add_to_cart(self, request: Request):
     cart json dumps
     cart save
     """
-
-    if request.user:
-        serializer = CartItemSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=400)
-
-        serializer_data = serializer.data
+    if request.auth:
         cart = request.user.cart
-        cart_items: dict = json.loads(cart.items)
-        product_id = serializer_data['product']
-
-        if product_id in cart_items:
-            cart_items[product_id]['quantity'] += serializer_data['quantity']
+    else:
+        if 'cart_id' in request.COOKIES:
+            cart = Cart.objects.get(id=request.COOKIES['cart_id'])
         else:
-            cart_items[product_id] = serializer_data
+            cart = Cart()
 
-        cart.items = json.dumps(cart_items)
-        cart.save()
+    serializer = CartItemSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=400)
 
+    serializer_data = serializer.data
+
+    cart_items: dict = cart.to_dict
+    product_id = serializer_data['product']
+
+    if product_id in cart.to_dict:
+        cart_items[product_id]['quantity'] += serializer_data['quantity']
+    else:
+        cart_items[product_id] = serializer_data
+
+    cart.items = json.dumps(cart_items)
+    cart.save()
+
+    res = Response(data=CartSerializer(cart).data, status=201)
+    if not request.auth:
+        expire = cart.created_at + timedelta(hours=1)
+        res.set_cookie('cart_id', cart.id, expires=expire)
+
+    return res
 
 
 

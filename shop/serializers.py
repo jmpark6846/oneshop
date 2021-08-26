@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from shop.models import Product, Review, CartItem
+from shop.models import Product, Review, CartItem, Cart
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -39,7 +39,11 @@ class ReviewListCreateSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.Serializer):
-    product = serializers.IntegerField()
+    product = serializers.CharField()
     quantity = serializers.IntegerField()
 
 
+class CartSerializer(serializers.Serializer):
+    class Meta:
+        model = Cart
+        fields = '__all__'

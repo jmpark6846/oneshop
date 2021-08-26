@@ -13,4 +13,4 @@ urls = [
     path('cart/', add_to_cart, name='add_to_cart')
 ]
 
-urlpatterns = urls + router.urls
+urlpatterns = urls

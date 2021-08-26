@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
+from shop.models import Cart
+
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
@@ -61,4 +63,11 @@ def save_profile(sender, instance, created, **kwargs):
         profile.save()
 
 
+def create_cart(sender, instance, created, **kwargs):
+    if created:
+        cart = Cart(user=instance)
+        cart.save()
+
+
 post_save.connect(save_profile, sender=User)
+post_save.connect(create_cart, sender=User)

@@ -1,10 +1,16 @@
-from enum import Enum
+import uuid
+import json
 from functools import reduce
 from django.db import models
 from oneshop.models import BaseModel
 
 
+def uuid_to_str():
+    return str(uuid.uuid4())
+
+
 class Product(models.Model):
+    id = models.CharField(primary_key=True, default=uuid_to_str, max_length=36, editable=False)
     name = models.CharField(max_length=70)
     price = models.IntegerField()
     category = models.ForeignKey('Category', on_delete=models.DO_NOTHING)
@@ -77,6 +83,11 @@ class OrderItem(BaseModel):
 
 
 class Cart(models.Model):
-    user = models.ForeignKey('accounts.User', related_name='cart', on_delete=models.CASCADE)
-    items = models.TextField()
+    id = models.CharField(primary_key=True, default=uuid_to_str, max_length=36, editable=False)
+    user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, null=True)
+    items = models.TextField(default="{}")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="생성 일시")
 
+    @property
+    def to_dict(self):
+        return json.loads(self.items)

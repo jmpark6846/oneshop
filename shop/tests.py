@@ -11,14 +11,17 @@ class ShopTestCase(APITestCase):
     def setUpTestData(cls):
         cls.product_count = random.randint(1, 5)
         category = Category.objects.create(name='category')
+        products = []
         for i in range(cls.product_count):
-            Product.objects.create(
+            product = Product.objects.create(
                 name=f'product{i}',
                 price=i,
                 category=category
             )
+            products.append(product)
 
-        cls.random_product_id = random.randint(1, cls.product_count)
+        # cls.random_product_id
+        cls.random_product = random.choice(products)
         cls.user = User.objects.create(
             email = 'test@test.co',
             password = 'test',
@@ -43,17 +46,16 @@ class ShopTestCase(APITestCase):
         return random.randint(1, self.product_count)
 
     def get_random_product(self):
-        random_product = Product.objects.get(id=self.random_product_id)
-        return random_product
+        return random.choice(Product.objects.all())
 
     def test_상품_목록을_조회한다(self):
         res = self.client.get('/shop/products/')
         self.assertIs(len(res.data), self.product_count)
 
     def test_상품_상세정보를_조회한다(self):
-        res = self.client.get(f'/shop/products/{self.random_product_id}/')
+        res = self.client.get(f'/shop/products/{self.random_product.id}/')
         self.assertIs(res.status_code, 200)
-        self.assertIs(res.data['id'], self.random_product_id)
+        self.assertIs(res.data['id'], self.random_product.id)
 
     def test_유저는_상품의_리뷰를_조회할수있다(self):
         product = self.get_random_product()
@@ -67,22 +69,22 @@ class ShopTestCase(APITestCase):
                 content="review content abcd"
             )
 
-        res = self.client.get(f'/shop/products/{self.random_product_id}/reviews/')
+        res = self.client.get(f'/shop/products/{self.random_product.id}/reviews/')
         self.assertIs(res.status_code, 200)
         self.assertIs(len(res.data), review_count)
 
     def test_유저는_상품의_리뷰를_생성할수있다(self):
         review_data = {
             'user': self.user.id,
-            'product': self.random_product_id,
+            'product': self.random_product.id,
             'title': 'review title',
             'content': 'review content'
         }
-        res = self.client.post(f'/shop/products/{self.random_product_id}/reviews/', data=review_data)
+        res = self.client.post(f'/shop/products/{self.random_product.id}/reviews/', data=review_data)
         self.assertIs(res.status_code, 201)
 
     def test_유저는_리뷰를_삭제할수있다(self):
-        product = Product.objects.get(id=self.random_product_id)
+        product = Product.objects.get(id=self.random_product.id)
         review = Review.objects.create(
             user=self.user,
             product=product,
@@ -98,7 +100,7 @@ class ShopTestCase(APITestCase):
         self.assertIs(product.reviews.count(), 0)
 
     def test_유저는_다른유저의_리뷰를_삭제할수없다(self):
-        product = Product.objects.get(id=self.random_product_id)
+        product = Product.objects.get(id=self.random_product.id)
         review = Review.objects.create(
             user=self.user,
             product=product,
@@ -107,35 +109,39 @@ class ShopTestCase(APITestCase):
         )
         self.login(user=self.user2)
         res = self.client.delete(f'/shop/reviews/{review.id}/')
-        # self.assertIs(res.status_code, 403) AssertionError: 403 is not 403 ..?
+        status_code_is_403 = res.status_code == 403
+        self.assertTrue(status_code_is_403)
         self.assertIs(product.reviews.count(), 1)
 
     def test_장바구니_추가할수있다(self):
-        self.login(user=self.user)
+        # 로그인하지 않은 유저가 장바구니에 제품 추가
         cart_item_data = {
-            'user': self.user.id,
-            'product': self.random_product_id
+            'product': self.random_product.id,
+            'quantity': 1,
         }
         res = self.client.post('/shop/cart/', cart_item_data)
         self.assertEqual(res.status_code, 201)
 
-    def test_장바구니에_있는_항목을_또_추가할경우_갯수추가(self):
+        # 로그인한 유저
         self.login(user=self.user)
-        product = Product.objects.get(id=self.random_product_id)
-        cart_item = CartItem.objects.create(
-            user=self.user,
-            product=product
-        )
-        new_cart_item_data = {
-            'user': self.user.id,
-            'product': self.random_product_id,
-            'quantity': 2
+        cart_item_data = {
+            'product': self.random_product.id,
+            'quantity': 1,
         }
-        res = self.client.post('/shop/cart/', new_cart_item_data)
-        cart_item.refresh_from_db()
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(cart_item.quantity, 3)
-        self.assertEqual(self.user.cart_items.count(), 1)
+        res = self.client.post('/shop/cart/', cart_item_data)
+        self.assertEqual(res.status_code, 201)
+
+        # 카트에 이미 있는 항목을 추가할 경우 수량만 추가
+        cart_item_data['quantity'] = 2
+
+        res = self.client.post('/shop/cart/', cart_item_data)
+        self.assertEqual(res.status_code, 201)
+
+        self.user.cart.refresh_from_db()
+        cart: dict = self.user.cart.to_dict
+
+        self.assertEqual(cart[self.random_product.id]['quantity'], 3)
+        self.assertEqual(len(cart.keys()), 1)
 
     def test_장바구니_항목들을_주문하고_결제한다(self):
         pass
