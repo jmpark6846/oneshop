@@ -13,7 +13,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
   web:
     build: .
-    command: sh -c "python manage.py runserver 0.0.0.0:8000" #python manage.py makemigrations && python manage.py migrate &&
+    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
     ports:
