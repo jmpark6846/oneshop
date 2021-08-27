@@ -5,6 +5,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
+from accounts.views import GoogleLogin, kakao_login
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -26,6 +27,20 @@ swagger_apis = [
 ]
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+   path('admin/', admin.site.urls),
 
+   # auth
+   path('allauth/', include('allauth.urls')),
+   path('accounts/', include('dj_rest_auth.urls')),
+   path('accounts/registration/', include('dj_rest_auth.registration.urls')),
+
+   # social login
+   path('accounts/google/login/', GoogleLogin.as_view(), name="google_login"),
+   path('accounts/kakao/login/', kakao_login, name='kakao_login'),
+
+   # back app
+   path('back/', include('back.urls')),
+
+   # shop app
+   path('shop/', include('shop.urls')),
 ] + swagger_apis

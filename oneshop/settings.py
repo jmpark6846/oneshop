@@ -55,12 +55,15 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.kakao',
     'dj_rest_auth',
     'dj_rest_auth.registration',
+
     'accounts',
+    'shop',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'oneshop.middlewares.csrf_middleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -150,7 +153,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000'
+    'http://localhost:3000',
+    'http://localhost:5000',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
@@ -166,15 +170,21 @@ AUTHENTICATION_BACKENDS = [
 
 AUTH_USER_MODEL = 'accounts.User'
 
+SITE_ID = 2
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
         'dj_rest_auth.jwt_auth.JWTCookieAuthentication',
     ),
+    # 'DEFAULT_PAGINATION_CLASS': 'oneshop.paginations.DefaultPagination',
+    # 'PAGE_SIZE': 3,
 }
+
+REST_USE_JWT = True
+# JWT_AUTH_COOKIE = "access-token"
 
 # django-allauth
 ACCOUNT_EMAIL_REQUIRED = True
@@ -183,14 +193,15 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
-SITE_ID = 1
-REST_USE_JWT = True
-
 # simple_jwt
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'AUTH_HEADER_TYPES': ('JWT',),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
+}
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+REST_AUTH_SERIALIZERS = {
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.UserDetailSerializer'
 }

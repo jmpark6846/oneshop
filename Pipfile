@@ -10,9 +10,10 @@ python-dotenv = "*"
 psycopg2-binary = "*"
 djangorestframework-simplejwt = "*"
 django-allauth = "*"
-dj-rest-auth = "*"
+dj-rest-auth = {extras = ["with_social"], version = "*"}
 django-cors-headers = "*"
 drf-yasg = "*"
+pillow = "*"
 
 [dev-packages]
 
