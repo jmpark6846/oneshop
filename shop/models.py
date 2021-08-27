@@ -48,12 +48,6 @@ class Review(BaseModel):
         return f'{self.product.name} - {self.title}'
 
 
-class CartItem(models.Model):
-    user = models.ForeignKey('accounts.User', related_name='cart_items', on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
-    quantity = models.SmallIntegerField(default=1)
-
-
 class Order(BaseModel):
     class OrderStatus(models.IntegerChoices):
         # 주문 상태는 간단히 두 가지만
@@ -65,11 +59,11 @@ class Order(BaseModel):
 
     @property
     def total_quantity(self):
-        return reduce(lambda total_quantity, item: total_quantity + item.price, self.items, 0)
+        return reduce(lambda total_quantity, item: total_quantity + item.price, self.items.all(), 0)
 
     @property
     def total_price(self):
-        return reduce(lambda total_price, item: total_price + item.price, self.items, 0)
+        return reduce(lambda total_price, item: total_price + item.price, self.items.all(), 0)
 
 
 class OrderItem(BaseModel):
@@ -82,6 +76,13 @@ class OrderItem(BaseModel):
         return self.product.price * self.quantity
 
 
+class Payment(models.Model):
+    user = models.ForeignKey('accounts.User', related_name='payments', on_delete=models.DO_NOTHING)
+    payment_id = models.CharField(max_length=36)
+    order = models.OneToOneField(Order, on_delete=models.DO_NOTHING)
+    amount = models.IntegerField(default=0)
+
+
 class Cart(models.Model):
     id = models.CharField(primary_key=True, default=uuid_to_str, max_length=36, editable=False)
     user = models.OneToOneField('accounts.User', on_delete=models.CASCADE, null=True)
@@ -89,5 +90,9 @@ class Cart(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text="생성 일시")
 
     @property
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return json.loads(self.items)
+
+    @property
+    def count(self) -> int:
+        return len(self.to_dict.keys())

@@ -64,4 +64,4 @@ class BackTestCase(APITestCase):
         }
 
         res = self.client.post('/back/products/', data=data)
-        self.assertIs(res.status_code, 200)
+        self.assertIs(res.status_code, 201)

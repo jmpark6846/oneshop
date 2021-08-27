@@ -1,6 +1,5 @@
-import datetime
-from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class BaseModel(models.Model):
@@ -14,5 +13,5 @@ class BaseModel(models.Model):
         abstract = True
 
     def delete(self, using=None, keep_parents=False):
-        self.deleted_at = datetime.datetime.now(tz=settings.TIME_ZONE)
+        self.deleted_at = timezone.localtime()
         super(BaseModel, self).save()

@@ -2,7 +2,7 @@ import random
 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.test import APITestCase, APIClient
-from shop.models import Product, Category, Review, CartItem
+from shop.models import Product, Category, Review
 from accounts.models import User
 
 
@@ -15,7 +15,7 @@ class ShopTestCase(APITestCase):
         for i in range(cls.product_count):
             product = Product.objects.create(
                 name=f'product{i}',
-                price=i,
+                price=(i+1)*1000,
                 category=category
             )
             products.append(product)
@@ -50,12 +50,12 @@ class ShopTestCase(APITestCase):
 
     def test_상품_목록을_조회한다(self):
         res = self.client.get('/shop/products/')
-        self.assertIs(len(res.data), self.product_count)
+        self.assertEqual(len(res.data), self.product_count)
 
     def test_상품_상세정보를_조회한다(self):
         res = self.client.get(f'/shop/products/{self.random_product.id}/')
         self.assertIs(res.status_code, 200)
-        self.assertIs(res.data['id'], self.random_product.id)
+        self.assertEqual(res.data['id'], self.random_product.id)
 
     def test_유저는_상품의_리뷰를_조회할수있다(self):
         product = self.get_random_product()
@@ -69,11 +69,12 @@ class ShopTestCase(APITestCase):
                 content="review content abcd"
             )
 
-        res = self.client.get(f'/shop/products/{self.random_product.id}/reviews/')
+        res = self.client.get(f'/shop/products/{product.id}/reviews/')
         self.assertIs(res.status_code, 200)
         self.assertIs(len(res.data), review_count)
 
     def test_유저는_상품의_리뷰를_생성할수있다(self):
+        self.login(self.user)
         review_data = {
             'user': self.user.id,
             'product': self.random_product.id,
@@ -84,20 +85,18 @@ class ShopTestCase(APITestCase):
         self.assertIs(res.status_code, 201)
 
     def test_유저는_리뷰를_삭제할수있다(self):
-        product = Product.objects.get(id=self.random_product.id)
         review = Review.objects.create(
             user=self.user,
-            product=product,
+            product=self.random_product,
             title='review title',
             content='review content'
         )
-
-        self.assertIs(product.reviews.count(), 1)
         self.login(user=self.user)
         res = self.client.delete(f'/shop/reviews/{review.id}/')
-
         self.assertIs(res.status_code, 204)
-        self.assertIs(product.reviews.count(), 0)
+
+        review.refresh_from_db()
+        self.assertIsNotNone(review.deleted_at)
 
     def test_유저는_다른유저의_리뷰를_삭제할수없다(self):
         product = Product.objects.get(id=self.random_product.id)
@@ -144,4 +143,16 @@ class ShopTestCase(APITestCase):
         self.assertEqual(len(cart.keys()), 1)
 
     def test_장바구니_항목들을_주문하고_결제한다(self):
-        pass
+        self.login(user=self.user)
+        cart_item_data = {
+            'product': self.random_product.id,
+            'quantity': 1,
+        }
+        self.client.post('/shop/cart/', cart_item_data)
+        res = self.client.post('/shop/cart/order/')
+        self.assertEqual(res.status_code, 200)
+
+        order_id = res.data['order']
+        res = self.client.post('/shop/payment/', {'order': order_id})
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNotNone(res.data['payment_id'])

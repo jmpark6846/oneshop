@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from shop.models import Product, Review, CartItem, Cart
+from shop.models import Product, Review, Cart, Payment
 
 
 class ProductListSerializer(serializers.ModelSerializer):
@@ -46,4 +46,10 @@ class CartItemSerializer(serializers.Serializer):
 class CartSerializer(serializers.Serializer):
     class Meta:
         model = Cart
+        fields = '__all__'
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
         fields = '__all__'
